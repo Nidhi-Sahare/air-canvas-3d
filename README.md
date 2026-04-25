@@ -1,40 +1,42 @@
-# Air Canvas Pro
+# Air Canvas with 3D Conversion
 
-Gesture-based touchless drawing system built with OpenCV and MediaPipe.
+Draw in the air using hand gestures and convert your final sketch into an interactive 3D model.
+
+## Features
+
+* Air drawing using hand tracking (MediaPipe + OpenCV)
+* Multiple tools (pen,eraser,size)
+* Save final drawing
+* Convert 2D drawing → 3D model
+* Rotate and explore 3D output
+
+## Tech Stack
+
+* Python (OpenCV, MediaPipe, NumPy)
+* JavaScript (Three.js)
 
 ## Demo
 
 ![Demo](demo.gif)
 
-## Features
-- Real-time hand tracking
-- Air drawing using index finger
-- Tool selection using gestures
-- Draw, eraser, spray, and crayon tools
-- Brush size control using vertical slider
-- Gesture-based zoom in/out
-- Dark themed interface
-- Save popup after exporting image
-- Reset canvas support
-
-## Tech Stack
-- Python
-- OpenCV
-- MediaPipe
-- NumPy
-
-## Controls
-| Action | Control |
-|---|---|
-| Draw | Index finger |
-| Select tool | Index + middle finger |
-| Zoom | Index + middle + ring + pinch |
-| Reset | R key |
-| Quit | Q key |
-
 ## Installation
+
 ```bash
-git clone YOUR_REPO_LINK
-cd air-canvas-pro
+git clone https://github.com/Nidhi-Sahare/air-canvas-3d
+cd YOUR_REPO
 pip install -r requirements.txt
 python main.py
+```
+
+## Controls
+
+* Draw → Hand gestures
+* Press `S` → Save image
+* Press `3` → Convert to 3D
+* Press `Q` → Quit
+
+
+
+## Author
+
+Nidhi Sahare

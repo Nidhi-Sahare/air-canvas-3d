@@ -2,6 +2,9 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import random
+import json
+import os
+import webbrowser
 
 # ---------- Save Popup ----------
 def show_save_popup(filename):
@@ -10,36 +13,90 @@ def show_save_popup(filename):
     while True:
         popup[:] = (18, 18, 25)
 
-        cv2.putText(popup, "IMAGE SAVED", (170, 160),
+        cv2.putText(popup, "IMAGE SAVED", (170, 140),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.4, (0, 255, 180), 3, cv2.LINE_AA)
 
-        cv2.putText(popup, filename, (180, 210),
+        cv2.putText(popup, filename, (180, 195),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (220, 220, 220), 2, cv2.LINE_AA)
 
-        cv2.putText(popup, "Press C to Continue", (190, 300),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200, 200, 210), 2, cv2.LINE_AA)
+        cv2.putText(popup, "Press 3 to Convert to 3D", (150, 285),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 180), 2, cv2.LINE_AA)
 
-        cv2.putText(popup, "Press Q to Quit", (220, 350),
+        cv2.putText(popup, "Press Q to Quit", (220, 340),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200, 200, 210), 2, cv2.LINE_AA)
 
         cv2.imshow("Saved", popup)
 
         key = cv2.waitKey(1) & 0xFF
 
-        if key == ord('c'):
+        if key == ord('3'):
             cv2.destroyWindow("Saved")
-            return "continue"
+            return "convert_3d"
 
         elif key == ord('q'):
             cv2.destroyWindow("Saved")
             return "quit"
 
 
+# ---------- Extract Final Visible Shape ----------
+def extract_contour_points(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+
+    contours, _ = cv2.findContours(
+        thresh,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    if not contours:
+        print("No visible drawing found.")
+        return None
+
+    contour = max(contours, key=cv2.contourArea)
+
+    epsilon = 0.002 * cv2.arcLength(contour, True)
+    contour = cv2.approxPolyDP(contour, epsilon, True)
+
+    points = []
+
+    for pt in contour:
+        x, y = pt[0]
+        points.append((x, y))
+
+    print(f"Extracted {len(points)} final visible contour points.")
+    return points
+
+
+# ---------- Export Points ----------
+def export_points_to_json(points, filename="points.json"):
+    if points is None or len(points) < 3:
+        print("Not enough points to convert to 3D.")
+        return False
+
+    data = [{"x": int(x), "y": int(y)} for x, y in points]
+
+    with open(filename, "w") as f:
+        json.dump(data, f)
+
+    print(f"Saved {len(points)} points to {filename}")
+    return True
+
+
+def open_3d_viewer():
+    webbrowser.open("http://localhost:8000/viewer.html")
+
+
 # ---------- Setup ----------
 cap = cv2.VideoCapture(0)
 
 mpHands = mp.solutions.hands
-hands = mpHands.Hands(max_num_hands=1,min_detection_confidence=0.5,min_tracking_confidence=0.5)
+hands = mpHands.Hands(
+    max_num_hands=1,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
 DARK_BG = (18, 18, 25)
 
@@ -206,7 +263,16 @@ while running:
 
                     result = show_save_popup(filename)
 
-                    if result == "quit":
+                    if result == "convert_3d":
+                        contour_points = extract_contour_points(drawing_layer)
+
+                        if contour_points is not None:
+                            saved = export_points_to_json(contour_points)
+
+                            if saved:
+                                open_3d_viewer()
+
+                    elif result == "quit":
                         running = False
                         break
 
@@ -237,14 +303,18 @@ while running:
             slider_top = 120
             slider_bottom = 390
 
-            cv2.rectangle(img_display, (570, slider_top - 20),(630, slider_bottom + 20), (30, 30, 42), -1)
+            cv2.rectangle(img_display, (570, slider_top - 20),
+                          (630, slider_bottom + 20), (30, 30, 42), -1)
 
-            cv2.line(img_display, (slider_x, slider_top),(slider_x, slider_bottom), (180, 180, 190), 5)
+            cv2.line(img_display, (slider_x, slider_top),
+                     (slider_x, slider_bottom), (180, 180, 190), 5)
 
             knob_y = int(slider_bottom - ((brush_thickness - 2) / 28) * (slider_bottom - slider_top))
+
             cv2.circle(img_display, (slider_x, knob_y), 15, (0, 255, 180), -1)
 
-            cv2.putText(img_display, "SIZE", (570, slider_top - 35),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (230, 230, 230), 2)
+            cv2.putText(img_display, "SIZE", (570, slider_top - 35),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (230, 230, 230), 2)
 
             if tool == "size" and index_up and 550 < x1 < 640 and slider_top < y1 < slider_bottom:
                 brush_thickness = int(np.interp(y1, [slider_bottom, slider_top], [2, 30]))
@@ -271,7 +341,8 @@ while running:
                     if xp == 0 and yp == 0:
                         xp, yp = canvas_x, canvas_y
 
-                    cv2.line(drawing_layer, (xp, yp), (canvas_x, canvas_y),(0, 0, 0), eraser_thickness)
+                    cv2.line(drawing_layer, (xp, yp), (canvas_x, canvas_y),
+                             (0, 0, 0), eraser_thickness)
 
                     xp, yp = canvas_x, canvas_y
 
@@ -314,21 +385,22 @@ while running:
 
     img_display[0:toolbar_height, 0:640] = toolbar_img
 
-    # Cursor
     if lmList:
         cv2.circle(img_display, (x1, y1), 18, draw_color, 2)
         cv2.circle(img_display, (x1, y1), 7, draw_color, -1)
 
-    # Bottom status bar
     overlay = img_display.copy()
     cv2.rectangle(overlay, (10, 425), (630, 475), (22, 22, 34), -1)
     img_display = cv2.addWeighted(overlay, 0.7, img_display, 0.3, 0)
 
-    cv2.putText(img_display, f"TOOL: {tool.upper()}", (25, 457),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
+    cv2.putText(img_display, f"TOOL: {tool.upper()}", (25, 457),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
 
-    cv2.putText(img_display, f"SIZE: {brush_thickness}", (260, 457),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
+    cv2.putText(img_display, f"SIZE: {brush_thickness}", (260, 457),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
 
-    cv2.putText(img_display, f"ZOOM: {zoom:.1f}x", (410, 457),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
+    cv2.putText(img_display, f"ZOOM: {zoom:.1f}x", (410, 457),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (230, 230, 230), 2)
 
     cv2.circle(img_display, (585, 452), 17, draw_color, -1)
     cv2.circle(img_display, (585, 452), 20, (230, 230, 230), 2)
@@ -346,6 +418,16 @@ while running:
         zoom = 1.0
         tool = "draw"
         show_size_slider = False
+        print("Canvas reset.")
+
+    if key == ord('3'):
+        contour_points = extract_contour_points(drawing_layer)
+
+        if contour_points is not None:
+            saved = export_points_to_json(contour_points)
+
+            if saved:
+                open_3d_viewer()
 
 cap.release()
 cv2.destroyAllWindows()
