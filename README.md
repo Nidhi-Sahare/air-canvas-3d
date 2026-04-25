@@ -16,8 +16,7 @@ Draw in the air using hand gestures and convert your final sketch into an intera
 * JavaScript (Three.js)
 
 ## Demo
-
-![Demo](demo.gif)
+![Demo](https://raw.githubusercontent.com/Nidhi-Sahare/air-canvas-3d/main/demo.gif)
 
 ## Installation
 
@@ -31,7 +30,6 @@ python main.py
 ## Controls
 
 * Draw → Hand gestures
-* Press `S` → Save image
 * Press `3` → Convert to 3D
 * Press `Q` → Quit
 
