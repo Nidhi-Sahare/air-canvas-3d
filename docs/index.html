@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Air Canvas 3D</title>
+<style>
+:root{
+    color-scheme:dark;
+    --background:#121219;
+    --panel:#191b24;
+    --border:#333641;
+    --text:#e6e6e6;
+    --muted:#aeb2bf;
+    --accent:#19e5db;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    min-height:100vh;
+    background:var(--background);
+    color:var(--text);
+    font-family:Arial,sans-serif;
+}
+.app{
+    width:100%;
+    min-height:100vh;
+    padding:28px 24px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:22px;
+}
+h1{
+    margin:0;
+    font-size:23px;
+    font-weight:500;
+    letter-spacing:0.2px;
+}
+.workspace{
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:24px;
+    width:100%;
+    max-width:1040px;
+}
+.camera-section{
+    flex:0 1 640px;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+}
+.canvas-container{
+    position:relative;
+    width:100%;
+    aspect-ratio:4/3;
+    background:#000;
+    overflow:hidden;
+    border:1px solid #252731;
+    border-radius:8px;
+}
+#webcam,#canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+}
+#webcam{
+    object-fit:fill;
+    transform:scaleX(-1);
+}
+#canvas{z-index:2}
+.toolbar{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:18.75%;
+    z-index:3;
+    pointer-events:none;
+}
+.status{
+    position:absolute;
+    bottom:1%;
+    left:1.5%;
+    width:97%;
+    height:10.5%;
+    background:rgba(22,22,34,0.78);
+    z-index:3;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    font-size:clamp(10px,1vw,14px);
+    pointer-events:none;
+}
+.camera-button{
+    padding:12px 25px;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    background:#10151c;
+    color:var(--accent);
+    font-size:15px;
+    cursor:pointer;
+}
+.camera-button:hover{background:#183033}
+.camera-button:disabled{
+    opacity:0.6;
+    cursor:wait;
+}
+.message{
+    min-height:20px;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+}
+.gesture-guide{
+    flex:0 0 280px;
+    padding:22px 20px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--panel);
+}
+.guide-heading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+}
+.guide-heading h2{
+    margin:0;
+    font-size:18px;
+    font-weight:600;
+}
+.guide-icon{
+    color:var(--accent);
+    font-size:24px;
+}
+.gesture-item{
+    padding:15px 0;
+    border-top:1px solid var(--border);
+}
+.gesture-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+    font-weight:600;
+    font-size:14px;
+}
+.finger-symbol{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    background:#102d30;
+    color:var(--accent);
+    font-size:14px;
+    font-weight:700;
+}
+.gesture-item p{
+    margin:0 0 0 44px;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--muted);
+}
+.shortcuts{
+    padding-top:17px;
+    border-top:1px solid var(--border);
+}
+.shortcuts h3{
+    margin:0 0 14px;
+    font-size:14px;
+}
+.shortcut-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:10px;
+    gap:12px;
+    font-size:12px;
+    color:var(--muted);
+}
+kbd{
+    min-width:29px;
+    padding:6px 8px;
+    border:1px solid #414450;
+    border-radius:6px;
+    background:#252833;
+    color:#fff;
+    font:inherit;
+    text-align:center;
+}
+.guide-note{
+    margin:18px 0 0;
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.6;
+}
+[hidden]{display:none!important}
+@media(max-width:800px){
+    .app{
+        justify-content:flex-start;
+        padding:24px 12px;
+    }
+    .workspace{
+        flex-direction:column;
+        align-items:center;
+    }
+    .camera-section{
+        flex:none;
+        width:100%;
+        max-width:640px;
+    }
+    .gesture-guide{
+        flex:none;
+        width:100%;
+        max-width:640px;
+    }
+    .status{font-size:clamp(9px,2.2vw,13px)}
+}
+</style>
+</head>
+<body>
+<main class="app">
+    <h1>Air Canvas 3D</h1>
+    <div class="workspace">
+        <section class="camera-section" aria-label="Air Canvas camera">
+            <div class="canvas-container">
+                <video id="webcam" autoplay muted playsinline></video>
+                <canvas id="canvas" width="640" height="480"></canvas>
+                <img class="toolbar" src="./toolbar.png" alt="Air Canvas drawing toolbar" draggable="false">
+                <div class="status">
+                    <span id="toolStatus">TOOL: DRAW</span>
+                    <span id="sizeStatus">SIZE: 8</span>
+                    <span id="zoomStatus">ZOOM: 1.0x</span>
+                    <span id="colorStatus">COLOR: BLUE</span>
+                </div>
+            </div>
+            <button id="startCamera" class="camera-button" type="button">Enable Camera</button>
+            <div id="message" class="message" role="status" aria-live="polite">Camera not started</div>
+        </section>
+        <aside class="gesture-guide" aria-label="Gesture guide">
+            <div class="guide-heading">
+                <span class="guide-icon" aria-hidden="true">✋</span>
+                <h2>Gesture Guide</h2>
+            </div>
+            <div class="gesture-item">
+                <div class="gesture-title">
+                    <span class="finger-symbol">1</span>
+                    Draw
+                </div>
+                <p>Raise your index finger only. Move your hand to draw on the canvas.</p>
+            </div>
+            <div class="gesture-item">
+                <div class="gesture-title">
+                    <span class="finger-symbol">2</span>
+                    Select
+                </div>
+                <p>Raise your index and middle fingers. Move to the toolbar to choose a tool, color, or brush size.</p>
+            </div>
+            <div class="gesture-item">
+                <div class="gesture-title">
+                    <span class="finger-symbol">3</span>
+                    Zoom
+                </div>
+                <p>Raise your index, middle, and ring fingers. Change the distance between your thumb and index finger to zoom.</p>
+            </div>
+            <div class="shortcuts">
+                <h3>Keyboard Shortcuts</h3>
+                <div class="shortcut-row">
+                    <span>Clear canvas</span>
+                    <kbd>R</kbd>
+                </div>
+                <div class="shortcut-row">
+                    <span>Convert to 3D</span>
+                    <kbd>3</kbd>
+                </div>
+            </div>
+            <p class="guide-note">Tip: Keep your hand clearly visible to the webcam for better tracking.</p>
+        </aside>
+    </div>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
