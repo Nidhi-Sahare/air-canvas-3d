@@ -1,40 +1,66 @@
-# Air Canvas with 3D Conversion
+# Air Canvas 3D
 
-Draw in the air using hand gestures and convert your final sketch into an interactive 3D model.
+Draw in the air with your finger, then turn your doodle into an interactive 3D model.
 
-## Features
+**Live demo (no install):** https://nidhi-sahare.github.io/air-canvas-3d/
 
-* Air drawing using hand tracking (MediaPipe + OpenCV)
-* Multiple tools (pen,eraser,size)
-* Save final drawing
-* Convert 2D drawing → 3D model
-* Rotate and explore 3D output
+![Demo](demo.gif)
 
-## Tech Stack
+## Two ways to use it
 
-* Python (OpenCV, MediaPipe, NumPy)
-* JavaScript (Three.js)
+### 1) In the browser (recommended)
+Open the live demo, click **Enable Camera**, allow access, and start drawing.
+Everything (hand tracking, drawing and the 3D view) runs in your browser — your video never leaves your device.
+Works best in Chrome / Edge, in good light, with your hand about an arm's length from the camera.
 
-## Demo
-![Demo](https://raw.githubusercontent.com/Nidhi-Sahare/air-canvas-3d/main/demo.gif)
-
-## Installation
-
+### 2) Desktop version (Python + OpenCV)
 ```bash
 git clone https://github.com/Nidhi-Sahare/air-canvas-3d
-cd YOUR_REPO
+cd air-canvas-3d
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
 ```
+Python 3.9 – 3.12 recommended. Press `3` to convert to 3D — the 3D viewer opens automatically.
 
-## Controls
+## Gestures
 
-* Draw → Hand gestures
-* Press `3` → Convert to 3D
-* Press `Q` → Quit
+| Gesture | What it does |
+|---|---|
+| ☝️ Index finger only | Draw |
+| ✌️ Index + middle | Select tools / colors / sizes (hold over a button briefly) |
+| 🤟 Index + middle + ring | Zoom — change the thumb ↔ index distance |
+| ☝️ in 3D view | Rotate the model |
 
+## Keyboard shortcuts
 
+| Key | Action |
+|---|---|
+| `R` | Clear canvas |
+| `3` | Convert to 3D / back to canvas |
+| `U` | Undo (web) |
+| `S` | Save image |
+| `Esc` | Back to canvas (web) |
+| `Q` | Quit (desktop) |
+
+## Features
+- Hand tracking with MediaPipe (smoothed, flicker-free finger detection)
+- Tools: draw, eraser, spray, crayon, rainbow color, 5 brush sizes
+- Zoom gesture, undo, save as PNG
+- Convert a 2D sketch into a 3D model (Solid, Neon, Layers and Relief styles)
+
+## Project files
+
+| File | Purpose |
+|---|---|
+| `index.html` | The web app (GitHub Pages serves this) |
+| `main.py` | Desktop version (OpenCV window) |
+| `viewer.html` | 3D viewer used by the desktop version |
+| `toolbar.png` | Toolbar image used by `main.py` |
+| `requirements.txt` | Python dependencies for the desktop version |
+
+## Tech stack
+MediaPipe Hands · Three.js · HTML5 Canvas · Python (OpenCV, NumPy)
 
 ## Author
-
 Nidhi Sahare
